@@ -9,12 +9,13 @@ from machine import idle, Pin, SPI
 import util
 import cyd
 
+BLACK = color565(0,0,0)
+CYAN = color565(0, 255, 255)
 PURPLE = color565(255, 0, 255)
+WHITE = color565(255, 255, 255)
 
 class Demo(object):
     '''Touchscreen simple demo.'''
-    CYAN = color565(0, 255, 255)
-    WHITE = color565(255, 255, 255)
 
     def __init__(self, display, spi2):
         '''Initialize box.
@@ -51,6 +52,11 @@ class Demo(object):
 
 def testScreen(display):
     display.clear(PURPLE)
+    display.draw_text8x8(display.width // 2 - 32,
+        int(display.height / 2),
+        "TOUCH ME",
+        WHITE,
+        background=BLACK)
     
 def test():
     
