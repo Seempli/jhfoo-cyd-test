@@ -1,18 +1,28 @@
-'''Micropython ILI9341 with xpt2046 touch screen demo for CYD
-    libraries and boilerplate altered from @rdagger ili9341 repo
-    https://raw.githubusercontent.com/rdagger/micropython-ili9341
+'''
+Ref
+- https://github.com/JettIsOnTheNet/Micropython-Examples-for-ESP32-Cheap-Yellow-Display/tree/main?tab=readme-ov-file
+- https://github.com/rdagger/micropython-ili9341/tree/master
+- https://shopee.co.th/ESP32-%E0%B8%9A%E0%B8%AD%E0%B8%A3%E0%B9%8C%E0%B8%94%E0%B8%9E%E0%B8%B1%E0%B8%92%E0%B8%99%E0%B8%B2-2.8-%E0%B8%99%E0%B8%B4%E0%B9%89%E0%B8%A7-Touch-Display-%E0%B8%AA%E0%B9%8D%E0%B8%B2%E0%B8%AB%E0%B8%A3%E0%B8%B1%E0%B8%9A-LVGL-WIFI-%E0%B8%9A%E0%B8%A5%E0%B8%B9%E0%B8%97%E0%B8%B9%E0%B8%98-240x320-%E0%B8%AB%E0%B8%99%E0%B9%89%E0%B8%B2%E0%B8%88%E0%B8%AD-LCD-TFT-%E0%B9%82%E0%B8%A1%E0%B8%94%E0%B8%B9%E0%B8%A5-i.110871174.27486883104
 '''
 
-from ili9341 import Display, color565
-#from xpt2046 import Touch
+# core
 from machine import idle, Pin, SPI
+from time import sleep
+
+# community
+from ili9341 import Display, color565
+
+# custom
 import util
 import cyd
+import touch
 
 BLACK = color565(0,0,0)
 CYAN = color565(0, 255, 255)
 PURPLE = color565(255, 0, 255)
 WHITE = color565(255, 255, 255)
+
+SPRITE_DOT = bytearray(b'\x00\x00\x07\xE0\xF8\x00\x07\xE0\x00\x00\x07\xE0\xF8\x00\xF8\x00\xF8\x00\x07\xE0\xF8\x00\xF8\x00\xF8\x00\xF8\x00\xF8\x00\x07\xE0\xF8\x00\xF8\x00\xF8\x00\x07\xE0\x00\x00\x07\xE0\xF8\x00\x07\xE0\x00\x00')
 
 class Demo(object):
     '''Touchscreen simple demo.'''
@@ -57,6 +67,22 @@ def testScreen(display):
         "TOUCH ME",
         WHITE,
         background=BLACK)
+    sleep(2)
+    display.draw_image('images/RaspberryPiWB128x128.raw', 0, 0, 128, 128)
+    display.draw_image('images/MicroPython128x128.raw', 129, 0, 128, 128)
+    display.draw_text8x8(display.width // 2 - 32,
+        int(display.height / 2) + 20,
+        str(cyd.getLdr()),
+        BLACK,
+        background=PURPLE)
+    
+    # ldr does not work
+#    for idx in range(10):
+#        print (cyd.getLdr())
+#        sleep (1)
+
+def onTouch(x, y):
+    print (f'Touched: x = {x}, y = {y}')
     
 def test():
     
@@ -83,7 +109,11 @@ def test():
     spi1 = util.getSpi(cyd)
     display = util.getDisplay(spi1, cyd)
     print (f'Display: {display.width} x {display.height}')
+    tspi = util.getSpi(touch)
+    tscreen = util.getTouch(tspi, touch, onTouch)
     testScreen(display)
+    
+    display.draw_sprite(SPRITE_DOT, 10 - 2, display.height - 10 - 2, 5, 5)
 #    spi1 = SPI(1, baudrate=40000000, sck=Pin(14), mosi=Pin(13))
 #    display = Display(spi1, dc=Pin(2), cs=Pin(15), rst=Pin(0))
     
@@ -97,14 +127,14 @@ def test():
 
  #   Demo(display, spi2)
 
-#    try:
-#        while True:
-#            idle()
-
-#    except KeyboardInterrupt:
-#        print("\nCtrl-C pressed.  Cleaning up and exiting...")
-#    finally:
-#        display.cleanup()
+    try:
+        while True:
+            idle()
+    except KeyboardInterrupt:
+        print("\nCtrl-C pressed.  Cleaning up and exiting...")
+    finally:
+        display.cleanup()
+        cyd.setBacklight(False)
 
 print ("Running")
 cyd.setLed(True, False, True)
