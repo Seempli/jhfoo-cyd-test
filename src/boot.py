@@ -7,26 +7,13 @@ from CheapYellowDisplay import CYD
 from dice import Dice
 
 
-
-def monitorDice(dice):
-    number = dice.roll()
-    print (f'Dice: {number}')
+def showCountdown(cyd, DotCount):
+    text = '.' * DotCount
+    cyd.setText(f'{text:<20}', row = 21)
     
-    return True if number == 6 else False
-
-print ('x')
-dice = Dice()
-
-try:
-    cyd = CYD()
-    cyd.setLed(True, False, True)
-    cyd.setBacklight()
-    
-    cyd.display.draw_image('images/RaspberryPiWB128x128.raw', 0, 0, 128, 128)
-    cyd.setText('Roll the dice!', row = 20)
-
+def monitorDice(cyd, dice):
     WAIT_TIMEOUT_SEC = 2 
-    SLEEP_INTERVAL_MSEC = 250
+    SLEEP_INTERVAL_MSEC = 200
     isExit = False
     OldNumber = None
     CountdownMsec = None
@@ -44,15 +31,35 @@ try:
                 device = dice.getDeviceByNumber(number)
                 cyd.setText(f'{device["name"]:<20}', row = 20)
                 CountdownMsec = WAIT_TIMEOUT_SEC * 1000
+                DotCount = int(CountdownMsec / SLEEP_INTERVAL_MSEC)
+                showCountdown(cyd, DotCount)
             else:
                 # check if countdown set
                 if not CountdownMsec == None:
+                    DotCount = int(CountdownMsec / SLEEP_INTERVAL_MSEC)
+                    showCountdown(cyd, DotCount)
+                    
                     CountdownMsec -= SLEEP_INTERVAL_MSEC
                     print (f'CountdownMsec: {CountdownMsec}')
                     if CountdownMsec == 0:
                         CountdownMsec = None
-                        print (f'Action on room')
+                        cyd.setText(f'{"Action executed":<20}', row = 21)
             sleep_ms(SLEEP_INTERVAL_MSEC)
+
+
+print ('x')
+dice = Dice()
+
+try:
+    cyd = CYD()
+    cyd.setLed(True, False, True)
+    cyd.setBacklight()
+    
+    cyd.display.draw_image('images/RaspberryPiWB128x128.raw', 0, 0, 128, 128)
+    cyd.setText('Roll the dice!', row = 20)
+
+    monitorDice(cyd, dice)
+    
 except KeyboardInterrupt:
     print("\nCtrl-C pressed.  Cleaning up and exiting...")
 finally:
